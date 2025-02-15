@@ -1,17 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Globe } from "lucide-react";
+import { Link } from "react-router";
 
 function Navigation(props) {
     return (
         <nav className="z-10 bg-black flex  items-center justify-between px-8 text-white py-4">
             <div className="flex items-center space-x-8">
-                <a href="/" className="text-2xl font-bold ">
+                <Link to="/" className="text-2xl font-bold ">
                     Horizone
-                </a>
+                </Link>
                 <div className="hidden md:flex space-x-6">
-                    <a href={`/`} className="transition-colors">
-                        Home
-                    </a>
+                    <Link to={`/hotels/123`} className="transition-colors">
+                        Hotels
+                    </Link>
                 </div>
             </div>
     
@@ -21,10 +22,10 @@ function Navigation(props) {
                     EN
                 </Button>
                 <Button variant="ghost" asChild>
-                    <a href="/sign-in">Log In</a>
+                    <Link to="/sign-in">Log In</Link>
                 </Button>
                 <Button asChild>
-                    <a href="/sign-up">Sign Up</a>
+                    <Link to="/sign-up">Sign Up</Link>
                 </Button>
             </div>
         </nav>
