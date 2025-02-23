@@ -4,7 +4,7 @@ import { Outlet } from "react-router";
 function MainLayout() {
     return (
         <>
-            <Navigation name="Manupa" />
+            <Navigation />
             <Outlet />
         </>
     )
