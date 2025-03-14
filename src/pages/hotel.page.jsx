@@ -11,23 +11,26 @@ import {
   Wifi,
 } from "lucide-react";
 
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HotelPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: hotel, isLoading, isError, error } = useGetHotelByIdQuery(id);
   const [createBooking, { isLoading: isCreateBookingLoading }
   ] = useCreateBookingMutation();
 
   const handleBook = async () => {
     try {
-      await createBooking({
-        hotelId: id,
-        checkIn: new Date(),
-        checkOut: new Date(),
-        roomNumber: 200
-      })
+      // await createBooking({
+      //   hotelId: id,
+      //   checkIn: new Date(),
+      //   checkOut: new Date(),
+      //   roomNumber: 200
+      // })
+      navigate(`/booking/${id}`);
+
     } catch (error) {
       console.log(error);
     }
