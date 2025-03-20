@@ -21,6 +21,11 @@ import AdminProtectedLayout from "./layouts/admin-protected-layout";
 import BookingFormPage from "./pages/booking-form.page";
 import UserBookingsPage from "./pages/account/bookings.page";
 
+import AdminDashboard from './pages/admin/dashboard.page';
+import AdminHotels from './pages/admin/hotels.page';
+// import AdminBookings from './pages/admin/bookings.page';
+import AdminReviews from './pages/admin/reviews.page';
+
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 if (!PUBLISHABLE_KEY) {
@@ -44,6 +49,10 @@ createRoot(document.getElementById("root")).render(
                   <Route path="/account" element={<AccountPage />} />
                   <Route element={<AdminProtectedLayout />}>
                     <Route path="/hotels/create" element={<CreateHotelPage />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/hotels" element={<AdminHotels />} />
+                    {/* <Route path="/admin/bookings" element={<AdminBookings />} /> */}
+                    <Route path="/admin/reviews" element={<AdminReviews />} />
                   </Route>
                 </Route>
               </Route>

@@ -15,6 +15,7 @@ import {
 import { useParams, useNavigate } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@clerk/clerk-react";
+import ReviewList from "@/components/hotel/ReviewList";
 
 export default function HotelPage() {
   const { user, isLoaded } = useUser();
@@ -26,9 +27,7 @@ export default function HotelPage() {
 
   const handleBook = async () => {
     try {
-      // Check if user is authenticated
       if (!user) {
-        // Redirect to sign-in page if not authenticated
         navigate('/sign-in');
         return;
       }
@@ -151,6 +150,10 @@ export default function HotelPage() {
                   <Coffee className="h-5 w-5 mr-2" />
                   <span>Coffee maker</span>
                 </div>
+              </div>
+              <div className="mt-8">
+                <Separator className="my-8" />
+                <ReviewList hotelId={id} />
               </div>
             </CardContent>
           </Card>
