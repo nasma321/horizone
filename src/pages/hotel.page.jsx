@@ -9,12 +9,15 @@ import {
   Star,
   Tv,
   Wifi,
+  LogIn
 } from "lucide-react";
 
 import { useParams, useNavigate } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUser } from "@clerk/clerk-react";
 
 export default function HotelPage() {
+  const { user, isLoaded } = useUser();
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: hotel, isLoading, isError, error } = useGetHotelByIdQuery(id);
@@ -23,14 +26,14 @@ export default function HotelPage() {
 
   const handleBook = async () => {
     try {
-      // await createBooking({
-      //   hotelId: id,
-      //   checkIn: new Date(),
-      //   checkOut: new Date(),
-      //   roomNumber: 200
-      // })
+      // Check if user is authenticated
+      if (!user) {
+        // Redirect to sign-in page if not authenticated
+        navigate('/sign-in');
+        return;
+      }
+      
       navigate(`/booking/${id}`);
-
     } catch (error) {
       console.log(error);
     }
@@ -156,7 +159,16 @@ export default function HotelPage() {
               <p className="text-2xl font-bold">${hotel.price}</p>
               <p className="text-sm text-muted-foreground">per night</p>
             </div>
-            <Button size="lg" onClick={handleBook}>Book Now</Button>
+            {user ? (
+              <Button size="lg" onClick={handleBook} disabled={isCreateBookingLoading}>
+                Book Now
+              </Button>
+            ) : (
+              <Button size="lg" onClick={() => navigate('/sign-in')} variant="outline">
+                <LogIn className="mr-2 h-4 w-4" />
+                Sign in to Book
+              </Button>
+            )}
           </div>
         </div>
       </div>

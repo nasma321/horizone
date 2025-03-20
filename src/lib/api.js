@@ -14,15 +14,19 @@ export const api = createApi({
       }
     }
   }),
+  tagTypes: ["Hotel", "Booking"],
   endpoints: (builder) => ({
     getHotels: builder.query({
       query: () => "hotels",
+      providesTags: ["Hotel"],
     }),
     getHotelsForSearchQuery: builder.query({
       query: ({query}) => `hotels/search/retrieve?query=${query}`,
+      providesTags: ["Hotel"],
     }),
     getHotelById: builder.query({
       query: (id) => `hotels/${id}`,
+      providesTags: (result, error, id) => [{ type: "Hotel", id }],
     }),
     createHotel: builder.mutation({
       query: (hotel) => ({
@@ -30,6 +34,7 @@ export const api = createApi({
         method: "POST",
         body: hotel,
       }),
+      invalidatesTags: ["Hotel"],
     }),
     createBooking: builder.mutation({
       query: (booking) => ({
@@ -37,9 +42,28 @@ export const api = createApi({
         method: "POST",
         body: booking,
       }),
+      invalidatesTags: ["Booking"],
+    }),
+    getUserBookings: builder.query({
+      query: (userId) => `bookings/user/${userId}`,
+      providesTags: ["Booking"],
+    }),
+    cancelBooking: builder.mutation({
+      query: (bookingId) => ({
+        url: `bookings/${bookingId}/cancel`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["Booking"],
     }),
   }),
 });
 
-export const { useGetHotelsQuery, useGetHotelsForSearchQueryQuery, useGetHotelByIdQuery, useCreateHotelMutation, useCreateBookingMutation } =
-  api;
+export const { 
+  useGetHotelsQuery, 
+  useGetHotelsForSearchQueryQuery, 
+  useGetHotelByIdQuery, 
+  useCreateHotelMutation, 
+  useCreateBookingMutation,
+  useGetUserBookingsQuery,
+  useCancelBookingMutation 
+} = api;

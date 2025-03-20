@@ -1,14 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
-import { Globe } from "lucide-react";
+import { Globe, Calendar } from "lucide-react";
 import { Link } from "react-router";
 
 function Navigation() {
-
   const { user } = useUser();
 
   return (
-    <nav className="z-10 bg-black flex  items-center justify-between px-8 text-white py-4">
+    <nav className="z-10 bg-black flex items-center justify-between px-8 text-white py-4">
       <div className="flex items-center space-x-8">
         <Link to="/" className="text-2xl font-bold ">
           Horizone
@@ -18,9 +17,18 @@ function Navigation() {
             Home
           </Link>
 
-          {user?.publicMetadata?.role === "admin" && (<Link to={`/hotels/create`} className="transition-colors">
-            Create Hotel
-          </Link>)}
+          {user?.publicMetadata?.role === "admin" && (
+            <Link to={`/hotels/create`} className="transition-colors">
+              Create Hotel
+            </Link>
+          )}
+          
+          <SignedIn>
+            <Link to={`/account/bookings`} className="transition-colors flex items-center">
+              <Calendar className="h-4 w-4 mr-1" />
+              My Bookings
+            </Link>
+          </SignedIn>
         </div>
       </div>
 
