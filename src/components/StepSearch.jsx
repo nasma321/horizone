@@ -24,7 +24,9 @@ import {
   Heart, 
   ChevronRight,
   ChevronLeft,
-  Search
+  Search,
+  Bed,
+  Coffee
 } from "lucide-react";
 
 export default function StepSearch() {
@@ -32,7 +34,7 @@ export default function StepSearch() {
   const [step, setStep] = useState(1);
   const [searchData, setSearchData] = useState({
     location: "",
-    budget: [200], // Default budget value
+    budget: [200],
     dateRange: "",
     activities: "",
     amenities: "",
@@ -90,11 +92,13 @@ export default function StepSearch() {
                 <SelectValue placeholder="Select a location" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="France">France</SelectItem>
+                <SelectItem value="Italy">Italy</SelectItem>
+                <SelectItem value="Australia">Australia</SelectItem>
+                <SelectItem value="Japan">Japan</SelectItem>
                 <SelectItem value="urban">Urban City Center</SelectItem>
                 <SelectItem value="beach">Beachfront</SelectItem>
                 <SelectItem value="mountain">Mountain Retreat</SelectItem>
-                <SelectItem value="countryside">Countryside</SelectItem>
-                <SelectItem value="lakeside">Lakeside</SelectItem>
               </SelectContent>
             </Select>
             <Input
@@ -129,6 +133,33 @@ export default function StepSearch() {
             <div className="text-white text-center font-medium">
               ${searchData.budget[0]} per night
             </div>
+            
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-white/20= w-full"
+                onClick={() => handleInputChange("budget", [100])}
+              >
+                Budget
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-white/20 w-full"
+                onClick={() => handleInputChange("budget", [250])}
+              >
+                Mid-range
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-white/20 w-full"
+                onClick={() => handleInputChange("budget", [500])}
+              >
+                Luxury
+              </Button>
+            </div>
           </div>
         );
       
@@ -149,6 +180,23 @@ export default function StepSearch() {
             <div className="text-white/70 text-sm">
               You can be specific or flexible with your dates
             </div>
+            
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div 
+                className="bg-black/20 rounded-lg p-3 cursor-pointer hover:bg-black/30 transition-colors border border-white/10"
+                onClick={() => handleInputChange("dateRange", "Next weekend")}
+              >
+                <h3 className="font-medium text-white mb-1">Next weekend</h3>
+                <p className="text-xs text-white/70">Perfect for a quick getaway</p>
+              </div>
+              <div 
+                className="bg-black/20 rounded-lg p-3 cursor-pointer hover:bg-black/30 transition-colors border border-white/10"
+                onClick={() => handleInputChange("dateRange", "Within 30 days")}
+              >
+                <h3 className="font-medium text-white mb-1">Within 30 days</h3>
+                <p className="text-xs text-white/70">Planning a trip soon</p>
+              </div>
+            </div>
           </div>
         );
       
@@ -156,14 +204,62 @@ export default function StepSearch() {
         return (
           <div className="space-y-4">
             <div className="flex items-center text-xl font-medium text-white mb-2">
-              <Heart className="mr-2 text-sky-400" />
-              What activities or amenities are important?
+              <Bed className="mr-2 text-sky-400" />
+              What amenities are important?
             </div>
-            <Textarea
-              placeholder="E.g., Swimming pool, spa, near hiking trails, family-friendly..."
-              className="bg-black/20 border-none text-white h-24 resize-none"
-              value={searchData.amenities}
-              onChange={(e) => handleInputChange("amenities", e.target.value)}
+            
+            <div className="grid grid-cols-2 gap-2">
+              {["WiFi", "Pool", "Spa", "Gym", "Restaurant", "Room Service", "Pet Friendly", "Parking"].map((amenity) => (
+                <div 
+                  key={amenity}
+                  className={`
+                    flex items-center gap-2 p-2 rounded border cursor-pointer transition-all
+                    ${searchData.amenities?.includes(amenity) 
+                      ? "bg-sky-400/20 border-sky-400/50" 
+                      : "bg-black/20 border-white/10 hover:bg-black/30"}
+                  `}
+                  onClick={() => {
+                    const currentAmenities = searchData.amenities ? searchData.amenities.split(", ").filter(a => a) : [];
+                    const isSelected = currentAmenities.includes(amenity);
+                    
+                    let newAmenities;
+                    if (isSelected) {
+                      newAmenities = currentAmenities.filter(a => a !== amenity);
+                    } else {
+                      newAmenities = [...currentAmenities, amenity];
+                    }
+                    
+                    handleInputChange("amenities", newAmenities.join(", "));
+                  }}
+                >
+                  <div className={`w-4 h-4 rounded-sm border ${searchData.amenities?.includes(amenity) ? "bg-sky-400 border-sky-400" : "border-white/50"}`}>
+                    {searchData.amenities?.includes(amenity) && (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white w-4 h-4">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-white">{amenity}</span>
+                </div>
+              ))}
+            </div>
+            
+            <Input
+              type="text"
+              placeholder="Any other specific amenities..."
+              className="bg-black/20 border-none text-white h-12 mt-2"
+              onChange={(e) => {
+                const currentAmenities = searchData.amenities ? searchData.amenities : "";
+                const customAmenity = e.target.value;
+                if (customAmenity && !currentAmenities.includes(customAmenity)) {
+                  handleInputChange("amenities", currentAmenities ? `${currentAmenities}, ${customAmenity}` : customAmenity);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.target.value = '';
+                }
+              }}
             />
           </div>
         );
@@ -175,17 +271,55 @@ export default function StepSearch() {
               <Sparkles className="mr-2 text-sky-400" />
               Any additional preferences?
             </div>
+            
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {["Quiet", "Ocean View", "City View", "Family Friendly", "Adults Only", "Eco-Friendly", "Luxury", "Budget Friendly"].map((pref) => (
+                <div 
+                  key={pref}
+                  className={`
+                    flex items-center gap-2 p-2 rounded border cursor-pointer transition-all
+                    ${searchData.preferences?.includes(pref) 
+                      ? "bg-sky-400/20 border-sky-400/50" 
+                      : "bg-black/20 border-white/10 hover:bg-black/30"}
+                  `}
+                  onClick={() => {
+                    const currentPrefs = searchData.preferences ? searchData.preferences.split(", ").filter(p => p) : [];
+                    const isSelected = currentPrefs.includes(pref);
+                    
+                    let newPrefs;
+                    if (isSelected) {
+                      newPrefs = currentPrefs.filter(p => p !== pref);
+                    } else {
+                      newPrefs = [...currentPrefs, pref];
+                    }
+                    
+                    handleInputChange("preferences", newPrefs.join(", "));
+                  }}
+                >
+                  <div className={`w-4 h-4 rounded-sm border ${searchData.preferences?.includes(pref) ? "bg-sky-400 border-sky-400" : "border-white/50"}`}>
+                    {searchData.preferences?.includes(pref) && (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white w-4 h-4">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-white">{pref}</span>
+                </div>
+              ))}
+            </div>
+            
             <Textarea
-              placeholder="E.g., Quiet atmosphere, pet-friendly, ocean view..."
-              className="bg-black/20 border-none text-white h-24 resize-none"
-              value={searchData.preferences}
-              onChange={(e) => handleInputChange("preferences", e.target.value)}
+              placeholder="Any specific requirements or preferences for your perfect stay..."
+              className="bg-black/20 border-none text-white h-20 resize-none"
+              value={searchData.activities}
+              onChange={(e) => handleInputChange("activities", e.target.value)}
             />
+            
             <div className="pt-4">
               <Button 
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full rounded-full h-12 text-lg flex items-center gap-x-2"
+                className="w-full rounded-full h-12 text-lg flex items-center gap-x-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700"
               >
                 <Search className="w-5 h-5 mr-2" />
                 Find My Perfect Staycation
@@ -200,33 +334,51 @@ export default function StepSearch() {
   };
 
   const renderStepIndicator = () => {
+    const steps = [
+      { number: 1, icon: MapPin, title: "Location" },
+      { number: 2, icon: DollarSign, title: "Budget" },
+      { number: 3, icon: Calendar, title: "Dates" },
+      { number: 4, icon: Coffee, title: "Amenities" },
+      { number: 5, icon: Sparkles, title: "Preferences" }
+    ];
+    
     return (
       <div className="flex justify-between mb-6 px-4">
-        {[1, 2, 3, 4, 5].map((stepNumber) => (
-          <div 
-            key={stepNumber}
-            className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all
-              ${step === stepNumber 
-                ? "bg-sky-400 text-white" 
-                : step > stepNumber 
-                  ? "bg-sky-800 text-white/80" 
-                  : "bg-white/20 text-white/60"}`}
-            onClick={() => setStep(stepNumber)}
-          >
-            {stepNumber}
-          </div>
-        ))}
+        {steps.map((stepItem) => {
+          const Icon = stepItem.icon;
+          return (
+            <div 
+              key={stepItem.number}
+              className="flex flex-col items-center cursor-pointer"
+              onClick={() => setStep(stepItem.number)}
+            >
+              <div 
+                className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 transition-all
+                  ${step === stepItem.number 
+                    ? "bg-gradient-to-r from-sky-500 to-indigo-600 text-white" 
+                    : step > stepItem.number 
+                      ? "bg-sky-800 text-white/80" 
+                      : "bg-white/20 text-white/60"}`}
+              >
+                <Icon className="h-5 w-5" />
+              </div>
+              <span className={`text-xs ${step === stepItem.number ? "text-white" : "text-white/60"}`}>
+                {stepItem.title}
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   };
 
   return (
     <div className="max-w-2xl mx-auto w-full">
-      <Card className="bg-black/40 backdrop-blur-md border-none shadow-xl">
+      <Card className="bg-black/60 backdrop-blur-md border-none shadow-xl overflow-hidden">
         <CardContent className="pt-6">
           {renderStepIndicator()}
           
-          <div className="min-h-48">
+          <div className="min-h-48 transition-all duration-300">
             {renderStepContent()}
           </div>
           
@@ -235,7 +387,7 @@ export default function StepSearch() {
               <Button 
                 variant="outline" 
                 onClick={prevStep}
-                className="rounded-full border-white/30 text-white hover:bg-white/10 hover:text-white"
+                className="rounded-full border-white/30 hover:text-white"
               >
                 <ChevronLeft className="mr-2 w-4 h-4" />
                 Back
@@ -244,7 +396,7 @@ export default function StepSearch() {
             {step < 5 && (
               <Button 
                 onClick={nextStep}
-                className={`rounded-full ml-auto ${!searchData.location && step === 1 ? "opacity-70" : ""}`}
+                className={`rounded-full ml-auto bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 ${!searchData.location && step === 1 ? "opacity-70" : ""}`}
                 disabled={step === 1 && !searchData.location}
               >
                 Next
