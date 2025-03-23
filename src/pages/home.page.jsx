@@ -6,7 +6,7 @@ export default function HomePage() {
   const searchQuery = useSelector((state) => state.search.value);
 
   return (
-    <div>
+    <div style={{ paddingTop: "60px" }}>
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/40 z-0"></div>
         <div 
@@ -30,7 +30,7 @@ export default function HomePage() {
       {!searchQuery && (
         <div className="bg-white py-16">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">Why Choose Horizone for Your Staycation?</h2>
+            <h2 className="text-3xl font-bold text-center mb-12">Why Choose Wanderlux for Your Staycation?</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center p-6 bg-gray-50 rounded-lg">
