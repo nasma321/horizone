@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import StepSearch from "@/components/StepSearch";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Building } from "lucide-react";
+import { Link } from "react-router";
 
 export default function Hero() {
   const [scrollY, setScrollY] = useState(0);
@@ -34,9 +37,21 @@ export default function Hero() {
             Find Your Perfect <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-500">Staycation</span> Experience
           </h1>
           
-          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8">
             Describe your dream destination and experience, and we'll find the perfect place for you.
           </p>
+          
+          <div className="flex justify-center">
+            <Link to="/hotels">
+              <Button 
+                size="lg" 
+                className="rounded-full bg-white text-gray-900 hover:bg-gray-100 flex items-center"
+              >
+                <Building className="mr-2 h-5 w-5" />
+                Browse All Hotels
+              </Button>
+            </Link>
+          </div>
         </motion.div>
 
         <motion.div

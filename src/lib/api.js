@@ -8,7 +8,6 @@ export const api = createApi({
     baseUrl: `${BACKEND_URL}/api/`,
     prepareHeaders: async (headers, { getState }) => {
       const token = await window?.Clerk?.session?.getToken();
-      console.log(token);
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
       }
@@ -16,7 +15,27 @@ export const api = createApi({
   }),
   endpoints: (builder) => ({
     getHotels: builder.query({
-      query: () => "hotels",
+      query: (params = {}) => {
+        const { location, sortBy, order } = params;
+        let queryString = '';
+        
+        if (location) {
+          queryString += `location=${encodeURIComponent(location)}&`;
+        }
+        
+        if (sortBy) {
+          queryString += `sortBy=${sortBy}&`;
+        }
+        
+        if (order) {
+          queryString += `order=${order}`;
+        }
+        
+        return `hotels${queryString ? `?${queryString}` : ''}`;
+      },
+    }),
+    getHotelLocations: builder.query({
+      query: () => "hotels/locations",
     }),
     getHotelsForSearchQuery: builder.query({
       query: ({query}) => `hotels/search/retrieve?query=${query}`,
@@ -41,5 +60,11 @@ export const api = createApi({
   }),
 });
 
-export const { useGetHotelsQuery, useGetHotelsForSearchQueryQuery, useGetHotelByIdQuery, useCreateHotelMutation, useCreateBookingMutation } =
-  api;
+export const { 
+  useGetHotelsQuery, 
+  useGetHotelLocationsQuery,
+  useGetHotelsForSearchQueryQuery, 
+  useGetHotelByIdQuery, 
+  useCreateHotelMutation, 
+  useCreateBookingMutation 
+} = api;

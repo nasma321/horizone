@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { MapPin, Star, Heart } from "lucide-react";
+import { MapPin, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 
 function HotelCard({ hotel }) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
 
   return (
     <div 
@@ -24,19 +23,6 @@ function HotelCard({ hotel }) {
           )}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="absolute top-2 right-2 bg-white/80 hover:bg-white text-rose-500 rounded-full z-10"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsFavorite(!isFavorite);
-          }}
-        >
-          <Heart className={cn("h-5 w-5", isFavorite && "fill-rose-500")} />
-        </Button>
         
         <div className="absolute bottom-2 left-2 z-10 flex gap-1">
           <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-md">

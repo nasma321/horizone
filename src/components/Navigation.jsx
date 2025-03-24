@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
-import { Globe, Menu, X, Moon, Sun } from "lucide-react";
+import { Globe, Menu, X, Moon, Sun, Search, Building } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
@@ -54,6 +54,7 @@ function Navigation() {
           
           <div className="hidden md:flex space-x-6">
             <NavLink to="/" label="Home" isActive={location.pathname === "/"} />
+            <NavLink to="/hotels" label="All Hotels" isActive={location.pathname === "/hotels"} />
             
             {user?.publicMetadata?.role === "admin" && (
               <NavLink 
@@ -117,6 +118,7 @@ function Navigation() {
         <div className="md:hidden bg-white text-gray-900 shadow-lg">
           <div className="flex flex-col space-y-3 p-4">
             <MobileNavLink to="/" label="Home" />
+            <MobileNavLink to="/hotels" label="All Hotels" />
             
             {user?.publicMetadata?.role === "admin" && (
               <MobileNavLink to="/hotels/create" label="Create Hotel" />
