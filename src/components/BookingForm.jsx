@@ -9,12 +9,9 @@ import { toast } from "sonner";
 import { useParams, useNavigate, useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+  Card,
+  CardContent
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -25,13 +22,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { format, addDays, isAfter, parseISO, differenceInDays } from "date-fns";
-import { Calendar, Clock, Users, CreditCard, Home, Star, Info } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Calendar, Clock, Users, CreditCard, Home, Star, Info, Plus, Minus } from "lucide-react";
 
 const formSchema = z.object({
   checkIn: z.string().min(1, { message: "Check-in date is required" }),
   checkOut: z.string().min(1, { message: "Check-out date is required" }),
-  roomNumber: z.number().positive({ message: "Please select a room" }),
+  roomType: z.string().min(1, { message: "Please select a room type" }),
   guests: z.object({
     adults: z.number().min(1, { message: "At least 1 adult is required" }).max(6),
     children: z.number().min(0).max(4)
@@ -46,27 +42,36 @@ const formSchema = z.object({
   path: ["checkOut"]
 });
 
+const ROOM_TYPES = [
+  { type: 'Standard', multiplier: 1 },
+  { type: 'Deluxe', multiplier: 1.25 },
+  { type: 'Suite', multiplier: 1.5 },
+  { type: 'Presidential', multiplier: 2 }
+];
+
 const BookingForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const initialRoomNumber = queryParams.get('room') ? parseInt(queryParams.get('room')) : null;
+  const initialRoomType = queryParams.get('roomType') || 'Standard';
   
   const { data: hotel, isLoading: isLoadingHotel } = useGetHotelByIdQuery(id);
   const [createBooking, { isLoading }] = useCreateBookingMutation();
   
-  const [availableRooms, setAvailableRooms] = useState([]);
-  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedRoomType, setSelectedRoomType] = useState(initialRoomType);
   const [nights, setNights] = useState(1);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [availableRooms, setAvailableRooms] = useState([]);
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
   
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       checkIn: format(new Date(), "yyyy-MM-dd"),
       checkOut: format(addDays(new Date(), 1), "yyyy-MM-dd"),
-      roomNumber: initialRoomNumber || 0,
+      roomType: initialRoomType,
       guests: {
         adults: 1,
         children: 0
@@ -75,42 +80,58 @@ const BookingForm = () => {
     }
   });
 
+  // Update form values when adults/children change
+  useEffect(() => {
+    form.setValue("guests.adults", adults);
+    form.setValue("guests.children", children);
+  }, [adults, children, form]);
+
+  // Set available rooms based on hotel data
   useEffect(() => {
     if (hotel?.rooms && hotel.rooms.length > 0) {
-      const available = hotel.rooms.filter(room => room.available);
-      setAvailableRooms(available);
+      // Group rooms by type and get available rooms
+      const roomsByType = {};
       
-      if (initialRoomNumber) {
-        const room = available.find(r => r.roomNumber === initialRoomNumber);
-        if (room) {
-          setSelectedRoom(room);
-          form.setValue("roomNumber", initialRoomNumber);
+      hotel.rooms.forEach(room => {
+        if (room.available) {
+          if (!roomsByType[room.type]) {
+            roomsByType[room.type] = [];
+          }
+          roomsByType[room.type].push(room);
         }
-      } 
-      else if (available.length > 0 && !selectedRoom) {
-        setSelectedRoom(available[0]);
-        form.setValue("roomNumber", available[0].roomNumber);
+      });
+      
+      setAvailableRooms(roomsByType);
+      
+      // Set selected room type if available
+      if (initialRoomType && roomsByType[initialRoomType]?.length > 0) {
+        setSelectedRoomType(initialRoomType);
+        form.setValue("roomType", initialRoomType);
+      } else {
+        // Find first available room type
+        const firstAvailableType = Object.keys(roomsByType)[0] || 'Standard';
+        setSelectedRoomType(firstAvailableType);
+        form.setValue("roomType", firstAvailableType);
       }
     } else if (hotel) {
-      const defaultRooms = [];
-      for (let i = 101; i <= 110; i++) {
-        defaultRooms.push({
-          roomNumber: i,
-          type: i % 4 === 0 ? 'Deluxe' : i % 4 === 1 ? 'Suite' : 'Standard',
-          capacity: i % 3 + 1,
-          price: hotel.price,
-          available: true
-        });
-      }
-      setAvailableRooms(defaultRooms);
+      // Create default room types if no rooms exist
+      const roomsByType = {};
       
-      if (defaultRooms.length > 0) {
-        setSelectedRoom(defaultRooms[0]);
-        form.setValue("roomNumber", defaultRooms[0].roomNumber);
-      }
+      ROOM_TYPES.forEach(({ type, multiplier }) => {
+        roomsByType[type] = [{
+          type,
+          price: hotel.price * multiplier,
+          available: true
+        }];
+      });
+      
+      setAvailableRooms(roomsByType);
+      setSelectedRoomType(initialRoomType);
+      form.setValue("roomType", initialRoomType);
     }
-  }, [hotel, initialRoomNumber, form]);
+  }, [hotel, initialRoomType, form]);
 
+  // Calculate price when relevant values change
   useEffect(() => {
     const values = form.getValues();
     const checkIn = parseISO(values.checkIn);
@@ -120,32 +141,51 @@ const BookingForm = () => {
       const nights = differenceInDays(checkOut, checkIn);
       setNights(nights);
       
-      if (selectedRoom) {
-        setTotalPrice(selectedRoom.price * nights);
-      } else if (hotel) {
-        setTotalPrice(hotel.price * nights);
+      const roomType = selectedRoomType;
+      const multiplier = ROOM_TYPES.find(rt => rt.type === roomType)?.multiplier || 1;
+      
+      if (hotel) {
+        const roomPrice = hotel.price * multiplier;
+        setTotalPrice(roomPrice * nights);
       }
     }
-  }, [form.watch("checkIn"), form.watch("checkOut"), selectedRoom, hotel]);
+  }, [form.watch("checkIn"), form.watch("checkOut"), selectedRoomType, hotel]);
 
-  const handleRoomSelect = (roomNumber) => {
-    const room = availableRooms.find(r => r.roomNumber === parseInt(roomNumber));
-    setSelectedRoom(room);
-    form.setValue("roomNumber", parseInt(roomNumber));
+  const handleRoomTypeSelect = (roomType) => {
+    setSelectedRoomType(roomType);
+    form.setValue("roomType", roomType);
+  };
+
+  const handleAdultsChange = (increment) => {
+    setAdults(prev => {
+      const newValue = prev + increment;
+      return newValue >= 1 && newValue <= 6 ? newValue : prev;
+    });
+  };
+
+  const handleChildrenChange = (increment) => {
+    setChildren(prev => {
+      const newValue = prev + increment;
+      return newValue >= 0 && newValue <= 4 ? newValue : prev;
+    });
   };
 
   const handleSubmit = async (values) => {
-    if (!selectedRoom) {
-      toast.error("Please select a room");
-      return;
-    }
-    
     try {
       toast.loading("Processing booking...");
       
+      // Find available room of selected type
+      const roomsOfType = availableRooms[selectedRoomType] || [];
+      const selectedRoom = roomsOfType[0];
+      
+      if (!selectedRoom) {
+        toast.error("No rooms available of selected type");
+        return;
+      }
+      
       const result = await createBooking({
         hotelId: id,
-        roomNumber: values.roomNumber,
+        roomNumber: selectedRoom.roomNumber || Math.floor(Math.random() * 100) + 101, // Use existing room number or generate one
         checkIn: values.checkIn,
         checkOut: values.checkOut,
         guests: values.guests,
@@ -153,7 +193,6 @@ const BookingForm = () => {
       }).unwrap();
       
       toast.success("Booking successful!");
-      
       navigate(`/bookings/${result.bookingId}`);
     } catch (error) {
       console.error("Booking error:", error);
@@ -245,101 +284,110 @@ const BookingForm = () => {
 
             <FormField
               control={form.control}
-              name="roomNumber"
+              name="roomType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Select Room</FormLabel>
-                  <FormControl>
-                    <Select 
-                      value={field.value ? field.value.toString() : ""} 
-                      onValueChange={handleRoomSelect}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a room" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableRooms.length > 0 ? (
-                          availableRooms.map((room) => (
-                            <SelectItem key={room.roomNumber} value={room.roomNumber.toString()}>
-                              Room #{room.roomNumber} - {room.type || 'Standard'} (${room.price}/night)
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="none" disabled>No rooms available</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormDescription>
-                    Choose from available rooms
-                  </FormDescription>
+                  <FormLabel>Room Type</FormLabel>
+                  <div className="grid grid-cols-2 gap-2">
+                    {ROOM_TYPES.map(({ type, multiplier }) => {
+                      const isAvailable = availableRooms[type]?.length > 0 || !Object.keys(availableRooms).length;
+                      const isSelected = selectedRoomType === type;
+                      const price = hotel.price * multiplier;
+                      
+                      return (
+                        <div 
+                          key={type}
+                          className={`border rounded-md p-3 cursor-pointer transition-all ${
+                            isSelected ? 'bg-sky-50 border-sky-300' : 'hover:bg-gray-50'
+                          } ${!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          onClick={() => isAvailable && handleRoomTypeSelect(type)}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-medium">{type}</h4>
+                              <p className="text-sm text-muted-foreground">${price}/night</p>
+                            </div>
+                            {isSelected && (
+                              <div className="h-5 w-5 rounded-full bg-sky-500 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-3 w-3 text-white">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="guests.adults"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Adults</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Select 
-                          value={field.value.toString()} 
-                          onValueChange={(value) => field.onChange(parseInt(value))}
-                        >
-                          <SelectTrigger className="pl-10">
-                            <SelectValue placeholder="Adults" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[1, 2, 3, 4, 5, 6].map(num => (
-                              <SelectItem key={num} value={num.toString()}>
-                                {num} {num === 1 ? 'Adult' : 'Adults'}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="space-y-4">
+              <FormLabel>Guests</FormLabel>
               
-              <FormField
-                control={form.control}
-                name="guests.children"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Children</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Select 
-                          value={field.value.toString()} 
-                          onValueChange={(value) => field.onChange(parseInt(value))}
-                        >
-                          <SelectTrigger className="pl-10">
-                            <SelectValue placeholder="Children" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[0, 1, 2, 3, 4].map(num => (
-                              <SelectItem key={num} value={num.toString()}>
-                                {num} {num === 1 ? 'Child' : 'Children'}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex flex-col space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium">Adults</span>
+                    <p className="text-sm text-muted-foreground">Age 18+</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => handleAdultsChange(-1)}
+                      disabled={adults <= 1}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="w-8 text-center font-medium">{adults}</span>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => handleAdultsChange(1)}
+                      disabled={adults >= 6}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium">Children</span>
+                    <p className="text-sm text-muted-foreground">Age 0-17</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => handleChildrenChange(-1)}
+                      disabled={children <= 0}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="w-8 text-center font-medium">{children}</span>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => handleChildrenChange(1)}
+                      disabled={children >= 4}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <FormField
@@ -363,7 +411,7 @@ const BookingForm = () => {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading || availableRooms.length === 0}>
+            <Button type="submit" className="w-full" disabled={isLoading || Object.keys(availableRooms).length === 0}>
               {isLoading ? "Processing..." : "Confirm Booking"}
             </Button>
           </form>
@@ -386,17 +434,15 @@ const BookingForm = () => {
             </div>
             
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Room</span>
-              <span className="font-medium">
-                {selectedRoom ? `#${selectedRoom.roomNumber} - ${selectedRoom.type || 'Standard'}` : 'Not selected'}
-              </span>
+              <span className="text-muted-foreground">Room Type</span>
+              <span className="font-medium">{selectedRoomType}</span>
             </div>
             
             <div className="flex justify-between">
               <span className="text-muted-foreground">Guests</span>
               <span className="font-medium">
-                {form.watch("guests.adults")} {form.watch("guests.adults") === 1 ? 'Adult' : 'Adults'}
-                {form.watch("guests.children") > 0 && `, ${form.watch("guests.children")} ${form.watch("guests.children") === 1 ? 'Child' : 'Children'}`}
+                {adults} {adults === 1 ? 'Adult' : 'Adults'}
+                {children > 0 && `, ${children} ${children === 1 ? 'Child' : 'Children'}`}
               </span>
             </div>
             
@@ -408,12 +454,12 @@ const BookingForm = () => {
             <div className="border-t pt-4 mt-4">
               <div className="flex justify-between text-sm">
                 <span>Room Rate</span>
-                <span>${selectedRoom ? selectedRoom.price : hotel.price} per night</span>
+                <span>${(totalPrice / nights).toFixed(2)} per night</span>
               </div>
               
               <div className="flex justify-between text-sm mt-2">
                 <span>Total for {nights} {nights === 1 ? 'night' : 'nights'}</span>
-                <span className="font-bold">${totalPrice}</span>
+                <span className="font-bold">${totalPrice.toFixed(2)}</span>
               </div>
             </div>
           </div>

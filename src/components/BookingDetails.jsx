@@ -24,6 +24,7 @@ import {
   AlertCircle,
   Loader2,
   Calendar,
+  Bed,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
@@ -214,8 +215,8 @@ const BookingDetails = () => {
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Room</h3>
                     <p className="font-medium flex items-center mt-1">
-                      <Home className="h-4 w-4 mr-2" />
-                      Room #{booking.roomNumber}
+                      <Bed className="h-4 w-4 mr-2" />
+                      {booking.roomType || 'Standard'} Room (#{booking.roomNumber})
                     </p>
                   </div>
 
@@ -327,7 +328,7 @@ const BookingDetails = () => {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-sm">
-                  <span>Room Rate (per night)</span>
+                  <span>{booking.roomType || 'Standard'} Room (per night)</span>
                   <span>${pricePerNight.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">

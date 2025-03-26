@@ -49,6 +49,16 @@ export default function HotelPage() {
     "https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=2025",
   ] : [];
 
+  // Helper function to get icon for amenity
+  const getAmenityIcon = (amenity) => {
+    const amenityLower = amenity.toLowerCase();
+    if (amenityLower.includes('wifi')) return <Wifi className="h-5 w-5" />;
+    if (amenityLower.includes('breakfast')) return <Coffee className="h-5 w-5" />;
+    if (amenityLower.includes('restaurant')) return <MenuSquare className="h-5 w-5" />;
+    if (amenityLower.includes('tv')) return <Tv className="h-5 w-5" />;
+    return <Star className="h-5 w-5" />;
+  };
+
   if (isLoading)
     return (
       <div className="container mx-auto px-4 py-24 min-h-screen">
@@ -98,7 +108,7 @@ export default function HotelPage() {
           <div className="flex gap-2">
             {isAdmin && (
               <Button asChild variant="outline">
-                <Link to={`/admin/hotels/${id}/bookings`}>
+                <Link to={`/hotels/${id}/bookings`}>
                   <Calendar className="mr-2 h-4 w-4" />
                   View Bookings
                 </Link>
@@ -144,28 +154,9 @@ export default function HotelPage() {
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Amenities</h2>
                 <div className="grid grid-cols-2 gap-6">
-                  {hotel.amenities ? (
+                  {hotel.amenities && hotel.amenities.length > 0 ? (
                     hotel.amenities.map((amenity, index) => {
-                      let icon;
-                      switch (amenity.toLowerCase()) {
-                        case 'wifi':
-                          icon = <Wifi className="h-5 w-5" />;
-                          break;
-                        case 'restaurant':
-                        case 'breakfast':
-                          icon = <MenuSquare className="h-5 w-5" />;
-                          break;
-                        case 'tv':
-                        case 'smart tv':
-                          icon = <Tv className="h-5 w-5" />;
-                          break;
-                        case 'coffee':
-                        case 'coffee service':
-                          icon = <Coffee className="h-5 w-5" />;
-                          break;
-                        default:
-                          icon = <Star className="h-5 w-5" />;
-                      }
+                      const icon = getAmenityIcon(amenity);
                       
                       return (
                         <div key={index} className="flex items-center">
@@ -217,38 +208,43 @@ export default function HotelPage() {
                   <div className="space-y-4">
                     {hotel.rooms
                       .filter(room => room.available)
-                      .slice(0, 3) // Show just a few rooms
-                      .map((room, index) => (
-                        <div key={index} className="border rounded-md p-4 flex justify-between items-center">
-                          <div>
-                            <h3 className="font-medium">Room #{room.roomNumber} - {room.type || 'Standard'}</h3>
-                            <p className="text-sm text-muted-foreground">Capacity: {room.capacity || 2} {room.capacity === 1 ? 'person' : 'people'}</p>
-                            {room.amenities && room.amenities.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {room.amenities.map((amenity, i) => (
-                                  <Badge key={i} variant="outline" className="text-xs">
-                                    {amenity}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold">${room.price}/night</p>
-                            <Button
-                              onClick={() => {
-                                navigate(`/booking/${id}?room=${room.roomNumber}`);
-                              }}
-                              size="sm"
-                              className="mt-2"
-                            >
-                              Select
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                      .slice(0, 4) // Show just a few rooms
+                      .map((room, index) => {
+                        // Get accurate price based on the room type
+                        const roomPrice = room.price || hotel.price;
 
-                    {hotel.rooms.filter(room => room.available).length > 3 && (
+                        return (
+                          <div key={index} className="border rounded-md p-4 flex justify-between items-center">
+                            <div>
+                              <h3 className="font-medium">Room #{room.roomNumber} - {room.type || 'Standard'}</h3>
+                              <p className="text-sm text-muted-foreground">Capacity: {room.capacity || 2} {room.capacity === 1 ? 'person' : 'people'}</p>
+                              {room.amenities && room.amenities.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {room.amenities.map((amenity, i) => (
+                                    <Badge key={i} variant="outline" className="text-xs">
+                                      {amenity}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold">${roomPrice}/night</p>
+                              <Button
+                                onClick={() => {
+                                  navigate(`/booking/${id}?roomType=${room.type}`);
+                                }}
+                                size="sm"
+                                className="mt-2"
+                              >
+                                Select
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                    {hotel.rooms.filter(room => room.available).length > 4 && (
                       <Button
                         variant="outline"
                         className="w-full mt-2"
@@ -293,7 +289,7 @@ export default function HotelPage() {
                 <ul className="mt-4 space-y-2 text-sm text-gray-600">
                   <li className="flex items-center">
                     <Star className="h-3 w-3 text-green-500 mr-2" />
-                    {hotel.policies?.cancellationPolicy || "Free cancellation up to 48 hours before check-in"}
+                    {hotel.policies?.cancellationPolicy || "Free cancellation up to 24 hours before check-in"}
                   </li>
                   <li className="flex items-center">
                     <Star className="h-3 w-3 text-green-500 mr-2" />

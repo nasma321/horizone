@@ -11,8 +11,7 @@ import UserBookingsPage from "./pages/user-bookings.page";
 import BookingDetailsPage from "./pages/booking-details.page";
 import CreateHotelPage from "./pages/create-hotel.page";
 import ProtectedLayout from "./layouts/protected.layout";
-import AdminBookingsPage from "./pages/admin-bookings.page";
-import HotelBookingsPage from "./pages/hotel-booking.page";
+import AdminProtectedLayout from "./layouts/admin-protected-layout";
 
 import SignInPage from "./pages/sign-in.page";
 import SignUpPage from "./pages/sign-up.page";
@@ -20,7 +19,6 @@ import { store } from "./lib/store";
 import { Provider } from "react-redux";
 
 import { ClerkProvider } from "@clerk/clerk-react";
-import AdminProtectedLayout from "./layouts/admin-protected-layout";
 import BookingFormPage from "./pages/booking-form.page";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -48,8 +46,6 @@ createRoot(document.getElementById("root")).render(
                   
                   <Route element={<AdminProtectedLayout />}>
                     <Route path="/hotels/create" element={<CreateHotelPage />} />
-                    <Route path="/admin/bookings" element={<AdminBookingsPage />} />
-                    <Route path="/admin/hotels/:id/bookings" element={<HotelBookingsPage />} />
                   </Route>
                 </Route>
               </Route>

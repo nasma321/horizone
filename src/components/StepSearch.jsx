@@ -84,30 +84,16 @@ export default function StepSearch() {
               <MapPin className="mr-2 text-sky-400" />
               Where would you like to stay?
             </div>
-            <Select 
-              value={searchData.location}
-              onValueChange={(value) => handleInputChange("location", value)}
-            >
-              <SelectTrigger className="bg-black/20 border-none text-white h-12">
-                <SelectValue placeholder="Select a location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="France">France</SelectItem>
-                <SelectItem value="Italy">Italy</SelectItem>
-                <SelectItem value="Australia">Australia</SelectItem>
-                <SelectItem value="Japan">Japan</SelectItem>
-                <SelectItem value="urban">Urban City Center</SelectItem>
-                <SelectItem value="beach">Beachfront</SelectItem>
-                <SelectItem value="mountain">Mountain Retreat</SelectItem>
-              </SelectContent>
-            </Select>
             <Input
               type="text"
-              placeholder="Or describe your ideal location..."
+              placeholder="Describe your ideal location or destination..."
               className="bg-black/20 border-none text-white h-12"
-              value={typeof searchData.location === 'string' ? searchData.location : ''}
+              value={searchData.location}
               onChange={(e) => handleInputChange("location", e.target.value)}
             />
+            <div className="text-white/70 text-sm mt-2">
+              Be specific or general - e.g., "Paris", "beach resort in Thailand", "mountain cabin"
+            </div>
           </div>
         );
       
@@ -396,8 +382,7 @@ export default function StepSearch() {
             {step < 5 && (
               <Button 
                 onClick={nextStep}
-                className={`rounded-full ml-auto bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 ${!searchData.location && step === 1 ? "opacity-70" : ""}`}
-                disabled={step === 1 && !searchData.location}
+                className="rounded-full ml-auto bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700"
               >
                 Next
                 <ChevronRight className="ml-2 w-4 h-4" />

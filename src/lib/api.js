@@ -80,17 +80,6 @@ export const api = createApi({
         { type: 'Booking', id },
         'Booking'
       ]
-    }),
-    getAllBookings: builder.query({
-      query: () => "bookings/admin/all",
-      providesTags: ['Booking']
-    }),
-    getHotelBookings: builder.query({
-      query: (hotelId) => `bookings/admin/hotel/${hotelId}`,
-      providesTags: (result, error, hotelId) => [
-        { type: 'Booking', id: `hotel-${hotelId}` },
-        'Booking'
-      ]
     })
   }),
 });
@@ -105,8 +94,5 @@ export const {
   useCreateBookingMutation,
   useGetUserBookingsQuery,
   useGetBookingByIdQuery,
-  useCancelBookingMutation,
-  
-  useGetAllBookingsQuery,
-  useGetHotelBookingsQuery
+  useCancelBookingMutation
 } = api;

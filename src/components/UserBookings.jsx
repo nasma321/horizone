@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useGetUserBookingsQuery, useCancelBookingMutation } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Info, AlertCircle, Check, X } from "lucide-react";
+import { Calendar, Clock, MapPin, Info, AlertCircle, Bed } from "lucide-react";
 import { formatDistance, format } from "date-fns";
 import { useNavigate } from "react-router";
 import { Link } from "react-router";
@@ -163,7 +163,12 @@ const UserBookings = () => {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Room</p>
-                  <p className="text-sm font-medium">#{booking.roomNumber}</p>
+                  <div className="flex items-center">
+                    <Bed className="h-3.5 w-3.5 mr-1" />
+                    <span className="text-sm font-medium">
+                      {booking.roomType || 'Standard'} #{booking.roomNumber}
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Price</p>

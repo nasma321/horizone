@@ -62,18 +62,11 @@ function Navigation() {
             <NavLink to="/hotels" label="All Hotels" isActive={location.pathname === "/hotels"} />
             
             {user?.publicMetadata?.role === "admin" && (
-              <>
-                <NavLink 
-                  to="/hotels/create" 
-                  label="Create Hotel" 
-                  isActive={location.pathname === "/hotels/create"} 
-                />
-                <NavLink 
-                  to="/admin/bookings" 
-                  label="Manage Bookings" 
-                  isActive={location.pathname === "/admin/bookings"} 
-                />
-              </>
+              <NavLink 
+                to="/hotels/create" 
+                label="Create Hotel" 
+                isActive={location.pathname === "/hotels/create"} 
+              />
             )}
           </div>
         </div>
@@ -134,10 +127,7 @@ function Navigation() {
             </SignedIn>
             
             {user?.publicMetadata?.role === "admin" && (
-              <>
-                <MobileNavLink to="/hotels/create" label="Create Hotel" />
-                <MobileNavLink to="/admin/bookings" label="Manage Bookings" />
-              </>
+              <MobileNavLink to="/hotels/create" label="Create Hotel" />
             )}
             
             <div className="pt-3 border-t border-gray-200 mt-2">

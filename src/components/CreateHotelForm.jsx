@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -79,6 +79,7 @@ const CreateHotelForm = () => {
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [customAmenity, setCustomAmenity] = useState("");
   const [activeTab, setActiveTab] = useState("basic");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -122,6 +123,13 @@ const CreateHotelForm = () => {
 
   const handleSubmit = async (values) => {
     try {
+      // Only proceed if we're on the final tab and all fields are valid
+      if (activeTab !== "policies") {
+        nextTab();
+        return;
+      }
+      
+      setIsSubmitting(true);
       toast.loading("Creating hotel...");
       
       // Include amenities in the form data
@@ -132,11 +140,14 @@ const CreateHotelForm = () => {
       // Generate rooms based on the hotel price
       const rooms = [];
       for (let i = 101; i <= 110; i++) {
+        const roomType = i % 4 === 0 ? 'Presidential' : i % 4 === 1 ? 'Deluxe' : i % 4 === 2 ? 'Suite' : 'Standard';
+        const multiplier = roomType === 'Presidential' ? 2 : roomType === 'Deluxe' ? 1.25 : roomType === 'Suite' ? 1.5 : 1;
+        
         rooms.push({
           roomNumber: i,
-          type: i % 4 === 0 ? 'Deluxe' : i % 4 === 1 ? 'Suite' : 'Standard',
+          type: roomType,
           capacity: i % 3 + 1,
-          price: values.price * (i % 4 === 0 ? 1.5 : i % 4 === 1 ? 1.25 : 1),
+          price: values.price * multiplier,
           amenities: selectedAmenities.slice(0, 3),
           available: true
         });
@@ -158,6 +169,8 @@ const CreateHotelForm = () => {
     } catch (error) {
       console.error(error);
       toast.error("Hotel creation failed");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -310,7 +323,7 @@ const CreateHotelForm = () => {
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     By default, the system will generate 10 rooms of different types based on your base price.
-                    Standard rooms will be priced at the base price. Deluxe rooms at 1.25x and Suites at 1.5x the base price.
+                    Standard rooms will be priced at the base price. Deluxe rooms at 1.25x, Suites at 1.5x, and Presidential rooms at 2x the base price.
                   </p>
                   
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -482,8 +495,8 @@ const CreateHotelForm = () => {
                   Continue
                 </Button>
               ) : (
-                <Button type="submit" className="ml-auto" disabled={isLoading}>
-                  {isLoading ? "Creating..." : "Create Hotel"}
+                <Button type="submit" className="ml-auto" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating..." : "Create Hotel"}
                 </Button>
               )}
             </div>
