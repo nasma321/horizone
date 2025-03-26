@@ -13,6 +13,7 @@ export const api = createApi({
       }
     }
   }),
+  tagTypes: ['Hotel', 'Booking'],
   endpoints: (builder) => ({
     getHotels: builder.query({
       query: (params = {}) => {
@@ -33,6 +34,7 @@ export const api = createApi({
         
         return `hotels${queryString ? `?${queryString}` : ''}`;
       },
+      providesTags: ['Hotel']
     }),
     getHotelLocations: builder.query({
       query: () => "hotels/locations",
@@ -42,6 +44,7 @@ export const api = createApi({
     }),
     getHotelById: builder.query({
       query: (id) => `hotels/${id}`,
+      providesTags: (result, error, id) => [{ type: 'Hotel', id }]
     }),
     createHotel: builder.mutation({
       query: (hotel) => ({
@@ -49,14 +52,46 @@ export const api = createApi({
         method: "POST",
         body: hotel,
       }),
+      invalidatesTags: ['Hotel']
     }),
+    
     createBooking: builder.mutation({
       query: (booking) => ({
         url: "bookings",
         method: "POST",
         body: booking,
       }),
+      invalidatesTags: ['Booking']
     }),
+    getUserBookings: builder.query({
+      query: () => "bookings/user",
+      providesTags: ['Booking']
+    }),
+    getBookingById: builder.query({
+      query: (id) => `bookings/${id}`,
+      providesTags: (result, error, id) => [{ type: 'Booking', id }]
+    }),
+    cancelBooking: builder.mutation({
+      query: (id) => ({
+        url: `bookings/${id}/cancel`,
+        method: "PUT"
+      }),
+      invalidatesTags: (result, error, id) => [
+        { type: 'Booking', id },
+        'Booking'
+      ]
+    }),
+    getAllBookings: builder.query({
+      query: () => "bookings/admin/all",
+      providesTags: ['Booking']
+    }),
+    getHotelBookings: builder.query({
+      query: (hotelId) => `bookings/admin/hotel/${hotelId}`,
+      providesTags: (result, error, hotelId) => [
+        { type: 'Booking', id: `hotel-${hotelId}` },
+        'Booking'
+      ]
+    })
   }),
 });
 
@@ -65,6 +100,13 @@ export const {
   useGetHotelLocationsQuery,
   useGetHotelsForSearchQueryQuery, 
   useGetHotelByIdQuery, 
-  useCreateHotelMutation, 
-  useCreateBookingMutation 
+  useCreateHotelMutation,
+  
+  useCreateBookingMutation,
+  useGetUserBookingsQuery,
+  useGetBookingByIdQuery,
+  useCancelBookingMutation,
+  
+  useGetAllBookingsQuery,
+  useGetHotelBookingsQuery
 } = api;

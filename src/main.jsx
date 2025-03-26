@@ -7,9 +7,12 @@ import RootLayout from "./layouts/root-layout.layout";
 import HomePage from "./pages/home.page";
 import HotelsPage from "./pages/hotels.page";
 import HotelPage from "./pages/hotel.page";
-import AccountPage from "./pages/account-page";
+import UserBookingsPage from "./pages/user-bookings.page";
+import BookingDetailsPage from "./pages/booking-details.page";
 import CreateHotelPage from "./pages/create-hotel.page";
 import ProtectedLayout from "./layouts/protected.layout";
+import AdminBookingsPage from "./pages/admin-bookings.page";
+import HotelBookingsPage from "./pages/hotel-booking.page";
 
 import SignInPage from "./pages/sign-in.page";
 import SignUpPage from "./pages/sign-up.page";
@@ -38,10 +41,15 @@ createRoot(document.getElementById("root")).render(
                 <Route path="/hotels" element={<HotelsPage />} />
                 <Route path="/hotels/:id" element={<HotelPage />} />
                 <Route path="/booking/:id" element={<BookingFormPage />} />
+                
                 <Route element={<ProtectedLayout />}>
-                  <Route path="/account" element={<AccountPage />} />
+                  <Route path="/account" element={<UserBookingsPage />} />
+                  <Route path="/bookings/:id" element={<BookingDetailsPage />} />
+                  
                   <Route element={<AdminProtectedLayout />}>
                     <Route path="/hotels/create" element={<CreateHotelPage />} />
+                    <Route path="/admin/bookings" element={<AdminBookingsPage />} />
+                    <Route path="/admin/hotels/:id/bookings" element={<HotelBookingsPage />} />
                   </Route>
                 </Route>
               </Route>

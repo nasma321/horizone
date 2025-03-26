@@ -1,10 +1,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
-import { Globe, Menu, X, Moon, Sun, Search, Building } from "lucide-react";
+import { Globe, Menu, X, Moon, Sun, Search, Building, Calendar, User } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 function Navigation() {
   const { user } = useUser();
@@ -39,9 +46,7 @@ function Navigation() {
     <nav
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled || !isHome
-          ? "bg-white/95 backdrop-blur-md text-gray-900 shadow-sm"
-          : "bg-transparent text-white"
+        "bg-white/95 backdrop-blur-md shadow-sm" // Always white background
       )}
     >
       <div className="container mx-auto flex justify-between items-center px-4 md:px-8 py-4">
@@ -57,26 +62,41 @@ function Navigation() {
             <NavLink to="/hotels" label="All Hotels" isActive={location.pathname === "/hotels"} />
             
             {user?.publicMetadata?.role === "admin" && (
-              <NavLink 
-                to="/hotels/create" 
-                label="Create Hotel" 
-                isActive={location.pathname === "/hotels/create"} 
-              />
+              <>
+                <NavLink 
+                  to="/hotels/create" 
+                  label="Create Hotel" 
+                  isActive={location.pathname === "/hotels/create"} 
+                />
+                <NavLink 
+                  to="/admin/bookings" 
+                  label="Manage Bookings" 
+                  isActive={location.pathname === "/admin/bookings"} 
+                />
+              </>
             )}
           </div>
         </div>
 
         <div className="hidden md:flex items-center space-x-3">
-         
-          <SignedOut>
+          <SignedIn>
             <Button 
-              variant="ghost" 
               size="sm"
               asChild
-              className={cn(
-                "rounded-full",
-                !scrolled && isHome ? "text-white hover:bg-white/20" : ""
-              )}
+              className="rounded-full bg-sky-500 hover:bg-sky-600 text-white"
+            >
+              <Link to="/account">My Bookings</Link>
+            </Button>
+            
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
+          
+          <SignedOut>
+            <Button 
+              variant="outline" 
+              size="sm"
+              asChild
+              className="rounded-full border-gray-300 text-gray-700 hover:bg-gray-100"
             >
               <Link to="/sign-in">Log In</Link>
             </Button>
@@ -88,24 +108,13 @@ function Navigation() {
               <Link to="/sign-up">Sign Up</Link>
             </Button>
           </SignedOut>
-          
-          <SignedIn>
-            <UserButton />
-            <Button 
-              asChild
-              size="sm"
-              className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 ml-2"
-            >
-              <Link to="/account">My Account</Link>
-            </Button>
-          </SignedIn>
         </div>
 
         <div className="md:hidden">
           <Button 
             variant="ghost" 
             size="icon"
-            className={!scrolled && isHome ? "text-white" : ""}
+            className="text-gray-700"
             onClick={toggleMenu}
           >
             {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -120,8 +129,15 @@ function Navigation() {
             <MobileNavLink to="/" label="Home" />
             <MobileNavLink to="/hotels" label="All Hotels" />
             
+            <SignedIn>
+              <MobileNavLink to="/account" label="My Bookings" />
+            </SignedIn>
+            
             {user?.publicMetadata?.role === "admin" && (
-              <MobileNavLink to="/hotels/create" label="Create Hotel" />
+              <>
+                <MobileNavLink to="/hotels/create" label="Create Hotel" />
+                <MobileNavLink to="/admin/bookings" label="Manage Bookings" />
+              </>
             )}
             
             <div className="pt-3 border-t border-gray-200 mt-2">
@@ -135,14 +151,6 @@ function Navigation() {
                   </Button>
                 </div>
               </SignedOut>
-              
-              <SignedIn>
-                <div className="flex flex-col space-y-3">
-                  <Button asChild className="w-full justify-start">
-                    <Link to="/account">My Account</Link>
-                  </Button>
-                </div>
-              </SignedIn>
             </div>
           </div>
         </div>
@@ -156,8 +164,10 @@ function NavLink({ to, label, isActive }) {
     <Link
       to={to}
       className={cn(
-        "text-sm font-medium transition-colors hover:text-sky-600 relative",
-        isActive && "text-sky-600"
+        "text-sm font-medium transition-colors relative",
+        isActive 
+          ? "text-sky-600" 
+          : "text-gray-700 hover:text-sky-600" // Dark gray text with blue hover
       )}
     >
       {label}

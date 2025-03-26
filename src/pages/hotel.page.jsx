@@ -15,16 +15,21 @@ import {
   ArrowLeft,
   Loader2,
   Map,
-  Calendar
+  Calendar,
+  Users
 } from "lucide-react";
 
 import { useParams, useNavigate } from "react-router";
 import { Link } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUser } from "@clerk/clerk-react";
 
 export default function HotelPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata?.role === "admin";
+  
   const { data: hotel, isLoading, isError, error } = useGetHotelByIdQuery(id);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -90,7 +95,17 @@ export default function HotelPage() {
             </div>
           </div>
           
-          
+          <div className="flex gap-2">
+            {isAdmin && (
+              <Button asChild variant="outline">
+                <Link to={`/admin/hotels/${id}/bookings`}>
+                  <Calendar className="mr-2 h-4 w-4" />
+                  View Bookings
+                </Link>
+              </Button>
+            )}
+            
+          </div>
         </div>
       </div>
 
@@ -129,35 +144,123 @@ export default function HotelPage() {
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Amenities</h2>
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 mr-3">
-                      <Wifi className="h-5 w-5" />
-                    </div>
-                    <span>Free High-Speed WiFi</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 mr-3">
-                      <MenuSquare className="h-5 w-5" />
-                    </div>
-                    <span>Gourmet Restaurant</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 mr-3">
-                      <Tv className="h-5 w-5" />
-                    </div>
-                    <span>Smart TV</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 mr-3">
-                      <Coffee className="h-5 w-5" />
-                    </div>
-                    <span>Coffee Service</span>
-                  </div>
+                  {hotel.amenities ? (
+                    hotel.amenities.map((amenity, index) => {
+                      let icon;
+                      switch (amenity.toLowerCase()) {
+                        case 'wifi':
+                          icon = <Wifi className="h-5 w-5" />;
+                          break;
+                        case 'restaurant':
+                        case 'breakfast':
+                          icon = <MenuSquare className="h-5 w-5" />;
+                          break;
+                        case 'tv':
+                        case 'smart tv':
+                          icon = <Tv className="h-5 w-5" />;
+                          break;
+                        case 'coffee':
+                        case 'coffee service':
+                          icon = <Coffee className="h-5 w-5" />;
+                          break;
+                        default:
+                          icon = <Star className="h-5 w-5" />;
+                      }
+                      
+                      return (
+                        <div key={index} className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 mr-3">
+                            {icon}
+                          </div>
+                          <span>{amenity}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    // Default amenities if none specified
+                    <>
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 mr-3">
+                          <Wifi className="h-5 w-5" />
+                        </div>
+                        <span>Free High-Speed WiFi</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 mr-3">
+                          <MenuSquare className="h-5 w-5" />
+                        </div>
+                        <span>Gourmet Restaurant</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 mr-3">
+                          <Tv className="h-5 w-5" />
+                        </div>
+                        <span>Smart TV</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 mr-3">
+                          <Coffee className="h-5 w-5" />
+                        </div>
+                        <span>Coffee Service</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            
+            {/* Room Information */}
+            {hotel.rooms && hotel.rooms.length > 0 && (
+              <Card>
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-semibold mb-4">Available Rooms</h2>
+                  <div className="space-y-4">
+                    {hotel.rooms
+                      .filter(room => room.available)
+                      .slice(0, 3) // Show just a few rooms
+                      .map((room, index) => (
+                        <div key={index} className="border rounded-md p-4 flex justify-between items-center">
+                          <div>
+                            <h3 className="font-medium">Room #{room.roomNumber} - {room.type || 'Standard'}</h3>
+                            <p className="text-sm text-muted-foreground">Capacity: {room.capacity || 2} {room.capacity === 1 ? 'person' : 'people'}</p>
+                            {room.amenities && room.amenities.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {room.amenities.map((amenity, i) => (
+                                  <Badge key={i} variant="outline" className="text-xs">
+                                    {amenity}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold">${room.price}/night</p>
+                            <Button
+                              onClick={() => {
+                                navigate(`/booking/${id}?room=${room.roomNumber}`);
+                              }}
+                              size="sm"
+                              className="mt-2"
+                            >
+                              Select
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+
+                    {hotel.rooms.filter(room => room.available).length > 3 && (
+                      <Button
+                        variant="outline"
+                        className="w-full mt-2"
+                        onClick={handleBook}
+                      >
+                        View All Rooms
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
@@ -190,12 +293,24 @@ export default function HotelPage() {
                 <ul className="mt-4 space-y-2 text-sm text-gray-600">
                   <li className="flex items-center">
                     <Star className="h-3 w-3 text-green-500 mr-2" />
-                    Free cancellation up to 48 hours before check-in
+                    {hotel.policies?.cancellationPolicy || "Free cancellation up to 48 hours before check-in"}
                   </li>
                   <li className="flex items-center">
                     <Star className="h-3 w-3 text-green-500 mr-2" />
                     No payment required today
                   </li>
+                  {hotel.policies?.checkInTime && (
+                    <li className="flex items-center">
+                      <Star className="h-3 w-3 text-green-500 mr-2" />
+                      Check-in from {hotel.policies.checkInTime}
+                    </li>
+                  )}
+                  {hotel.policies?.checkOutTime && (
+                    <li className="flex items-center">
+                      <Star className="h-3 w-3 text-green-500 mr-2" />
+                      Check-out until {hotel.policies.checkOutTime}
+                    </li>
+                  )}
                 </ul>
               </CardContent>
             </Card>
