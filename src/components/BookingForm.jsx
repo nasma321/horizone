@@ -49,6 +49,16 @@ const ROOM_TYPES = [
   { type: 'Presidential', multiplier: 2 }
 ];
 
+// Function to find an available room by type
+const findAvailableRoomByType = (hotel, roomType) => {
+  if (!hotel || !hotel.rooms) return null;
+  
+  // Find the first available room of the requested type
+  return hotel.rooms.find(room => 
+    room.type === roomType && room.available === true
+  );
+};
+
 const BookingForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -62,7 +72,8 @@ const BookingForm = () => {
   const [selectedRoomType, setSelectedRoomType] = useState(initialRoomType);
   const [nights, setNights] = useState(1);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [availableRooms, setAvailableRooms] = useState([]);
+  const [availableRooms, setAvailableRooms] = useState({});
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   
@@ -86,7 +97,7 @@ const BookingForm = () => {
     form.setValue("guests.children", children);
   }, [adults, children, form]);
 
-  // Set available rooms based on hotel data
+  // Set available rooms based on hotel data and auto-select a room if roomType is provided
   useEffect(() => {
     if (hotel?.rooms && hotel.rooms.length > 0) {
       // Group rooms by type and get available rooms
@@ -107,11 +118,20 @@ const BookingForm = () => {
       if (initialRoomType && roomsByType[initialRoomType]?.length > 0) {
         setSelectedRoomType(initialRoomType);
         form.setValue("roomType", initialRoomType);
+        
+        // Auto-select a room of the specified type
+        const availableRoom = roomsByType[initialRoomType][0];
+        setSelectedRoom(availableRoom);
       } else {
         // Find first available room type
         const firstAvailableType = Object.keys(roomsByType)[0] || 'Standard';
         setSelectedRoomType(firstAvailableType);
         form.setValue("roomType", firstAvailableType);
+        
+        // Auto-select a room of the first available type
+        if (roomsByType[firstAvailableType]?.length > 0) {
+          setSelectedRoom(roomsByType[firstAvailableType][0]);
+        }
       }
     } else if (hotel) {
       // Create default room types if no rooms exist
@@ -120,6 +140,7 @@ const BookingForm = () => {
       ROOM_TYPES.forEach(({ type, multiplier }) => {
         roomsByType[type] = [{
           type,
+          roomNumber: `${type.charAt(0)}${Math.floor(Math.random() * 100) + 100}`,
           price: hotel.price * multiplier,
           available: true
         }];
@@ -128,6 +149,11 @@ const BookingForm = () => {
       setAvailableRooms(roomsByType);
       setSelectedRoomType(initialRoomType);
       form.setValue("roomType", initialRoomType);
+      
+      // Auto-select a room of the specified type
+      if (roomsByType[initialRoomType]?.length > 0) {
+        setSelectedRoom(roomsByType[initialRoomType][0]);
+      }
     }
   }, [hotel, initialRoomType, form]);
 
@@ -142,18 +168,34 @@ const BookingForm = () => {
       setNights(nights);
       
       const roomType = selectedRoomType;
-      const multiplier = ROOM_TYPES.find(rt => rt.type === roomType)?.multiplier || 1;
       
       if (hotel) {
-        const roomPrice = hotel.price * multiplier;
+        // Get price from the selected room if available, otherwise calculate from base price
+        let roomPrice;
+        
+        if (selectedRoom && selectedRoom.price) {
+          roomPrice = selectedRoom.price;
+        } else {
+          const multiplier = ROOM_TYPES.find(rt => rt.type === roomType)?.multiplier || 1;
+          roomPrice = hotel.price * multiplier;
+        }
+        
         setTotalPrice(roomPrice * nights);
       }
     }
-  }, [form.watch("checkIn"), form.watch("checkOut"), selectedRoomType, hotel]);
+  }, [form.watch("checkIn"), form.watch("checkOut"), selectedRoomType, selectedRoom, hotel]);
 
   const handleRoomTypeSelect = (roomType) => {
     setSelectedRoomType(roomType);
     form.setValue("roomType", roomType);
+    
+    // Auto-select a room of the selected type
+    const roomsOfType = availableRooms[roomType] || [];
+    if (roomsOfType.length > 0) {
+      setSelectedRoom(roomsOfType[0]);
+    } else {
+      setSelectedRoom(null);
+    }
   };
 
   const handleAdultsChange = (increment) => {
@@ -174,21 +216,25 @@ const BookingForm = () => {
     try {
       toast.loading("Processing booking...");
       
-      // Find available room of selected type
-      const roomsOfType = availableRooms[selectedRoomType] || [];
-      const selectedRoom = roomsOfType[0];
-      
+      // Find available room of selected type if not already selected
       if (!selectedRoom) {
-        toast.error("No rooms available of selected type");
-        return;
+        const roomsOfType = availableRooms[selectedRoomType] || [];
+        if (roomsOfType.length === 0) {
+          toast.error("No rooms available of selected type");
+          return;
+        }
+        setSelectedRoom(roomsOfType[0]);
       }
       
       const result = await createBooking({
         hotelId: id,
-        roomNumber: selectedRoom.roomNumber || Math.floor(Math.random() * 100) + 101, // Use existing room number or generate one
+        roomId: selectedRoom.id || selectedRoom._id,
+        roomNumber: selectedRoom.roomNumber || Math.floor(Math.random() * 100) + 101,
+        roomType: selectedRoomType,
         checkIn: values.checkIn,
         checkOut: values.checkOut,
         guests: values.guests,
+        price: totalPrice,
         specialRequests: values.specialRequests
       }).unwrap();
       
@@ -238,6 +284,21 @@ const BookingForm = () => {
             </span>
           </div>
         </div>
+        
+        {/* Display selected room information if available */}
+        {selectedRoom && (
+          <div className="mb-6 p-4 bg-sky-50 border border-sky-100 rounded-lg">
+            <h4 className="font-medium flex items-center">
+              <Star className="h-4 w-4 text-sky-600 mr-2" />
+              Selected Room
+            </h4>
+            <div className="mt-2">
+              <p><strong>Type:</strong> {selectedRoom.type} Room</p>
+              {selectedRoom.roomNumber && <p><strong>Room #:</strong> {selectedRoom.roomNumber}</p>}
+              <p><strong>Price:</strong> ${selectedRoom.price || (hotel.price * (ROOM_TYPES.find(rt => rt.type === selectedRoom.type)?.multiplier || 1))}/night</p>
+            </div>
+          </div>
+        )}
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -411,7 +472,11 @@ const BookingForm = () => {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading || Object.keys(availableRooms).length === 0}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading || !selectedRoom || Object.keys(availableRooms).length === 0}
+            >
               {isLoading ? "Processing..." : "Confirm Booking"}
             </Button>
           </form>
@@ -437,6 +502,13 @@ const BookingForm = () => {
               <span className="text-muted-foreground">Room Type</span>
               <span className="font-medium">{selectedRoomType}</span>
             </div>
+            
+            {selectedRoom && selectedRoom.roomNumber && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Room Number</span>
+                <span className="font-medium">{selectedRoom.roomNumber}</span>
+              </div>
+            )}
             
             <div className="flex justify-between">
               <span className="text-muted-foreground">Guests</span>

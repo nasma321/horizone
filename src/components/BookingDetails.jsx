@@ -133,12 +133,13 @@ const BookingDetails = () => {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
-        <Button variant="ghost" asChild className="mb-4 -ml-3">
-          <Link to="/account">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Bookings
-          </Link>
-        </Button>
+      <Button variant="ghost" asChild className="mt-12 mb-4 -ml-3">
+        <Link to="/account">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Bookings
+        </Link>
+      </Button>
+
         
         <div className="flex flex-wrap justify-between items-start gap-4">
           <div>

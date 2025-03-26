@@ -121,16 +121,13 @@ const CreateHotelForm = () => {
     setCustomAmenity("");
   };
 
-  const handleSubmit = async (values) => {
+  // Separate submission from form
+  const submitForm = async () => {
     try {
-      // Only proceed if we're on the final tab and all fields are valid
-      if (activeTab !== "policies") {
-        nextTab();
-        return;
-      }
-      
       setIsSubmitting(true);
       toast.loading("Creating hotel...");
+      
+      const values = form.getValues();
       
       // Include amenities in the form data
       if (selectedAmenities.length > 0) {
@@ -213,7 +210,20 @@ const CreateHotelForm = () => {
       
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              // Only submit if we're on the final tab
+              if (activeTab === "policies") {
+                if (form.formState.isValid) {
+                  submitForm();
+                } else {
+                  form.trigger();
+                }
+              }
+            }} 
+            className="space-y-6"
+          >
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid grid-cols-4 mb-6">
                 <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -495,7 +505,11 @@ const CreateHotelForm = () => {
                   Continue
                 </Button>
               ) : (
-                <Button type="submit" className="ml-auto" disabled={isSubmitting}>
+                <Button 
+                  type="submit" 
+                  className="ml-auto" 
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Creating..." : "Create Hotel"}
                 </Button>
               )}

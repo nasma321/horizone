@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,15 +14,15 @@ import {
   Share,
   ArrowLeft,
   Loader2,
-  Map,
-  Calendar,
-  Users
+  Users,
+  Bed
 } from "lucide-react";
 
 import { useParams, useNavigate } from "react-router";
 import { Link } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@clerk/clerk-react";
+import { toast } from "sonner";
 
 export default function HotelPage() {
   const { id } = useParams();
@@ -31,15 +31,40 @@ export default function HotelPage() {
   const isAdmin = user?.publicMetadata?.role === "admin";
   
   const { data: hotel, isLoading, isError, error } = useGetHotelByIdQuery(id);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
-
-  const handleBook = async () => {
-    try {
-      navigate(`/booking/${id}`);
-    } catch (error) {
-      console.log(error);
+  
+  // Group rooms by type for display
+  const [roomTypes, setRoomTypes] = useState([]);
+  
+  useEffect(() => {
+    if (hotel?.rooms) {
+      // Group rooms by type and calculate availability and prices
+      const types = {};
+      
+      hotel.rooms.forEach(room => {
+        if (!types[room.type]) {
+          types[room.type] = {
+            type: room.type,
+            price: room.price,
+            capacity: room.capacity,
+            availableCount: 0,
+            amenities: room.amenities || []
+          };
+        }
+        
+        if (room.available) {
+          types[room.type].availableCount++;
+        }
+      });
+      
+      // Convert to array and sort by price
+      setRoomTypes(Object.values(types).sort((a, b) => a.price - b.price));
     }
+  }, [hotel]);
+
+  const handleBookRoomType = (roomType) => {
+    // In a real app, this would navigate to a booking page with room type preset
+    navigate(`/booking/${id}?roomType=${roomType}`);
   };
 
   const images = hotel ? [
@@ -109,12 +134,11 @@ export default function HotelPage() {
             {isAdmin && (
               <Button asChild variant="outline">
                 <Link to={`/hotels/${id}/bookings`}>
-                  <Calendar className="mr-2 h-4 w-4" />
+                  <Users className="mr-2 h-4 w-4" />
                   View Bookings
                 </Link>
               </Button>
             )}
-            
           </div>
         </div>
       </div>
@@ -200,63 +224,69 @@ export default function HotelPage() {
               </CardContent>
             </Card>
 
-            {/* Room Information */}
-            {hotel.rooms && hotel.rooms.length > 0 && (
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">Available Rooms</h2>
+            {/* Room Types Section - Replaces the old Room Information section */}
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Room Types</h2>
+                {roomTypes.length > 0 ? (
                   <div className="space-y-4">
-                    {hotel.rooms
-                      .filter(room => room.available)
-                      .slice(0, 4) // Show just a few rooms
-                      .map((room, index) => {
-                        // Get accurate price based on the room type
-                        const roomPrice = room.price || hotel.price;
-
-                        return (
-                          <div key={index} className="border rounded-md p-4 flex justify-between items-center">
-                            <div>
-                              <h3 className="font-medium">Room #{room.roomNumber} - {room.type || 'Standard'}</h3>
-                              <p className="text-sm text-muted-foreground">Capacity: {room.capacity || 2} {room.capacity === 1 ? 'person' : 'people'}</p>
-                              {room.amenities && room.amenities.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {room.amenities.map((amenity, i) => (
-                                    <Badge key={i} variant="outline" className="text-xs">
-                                      {amenity}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              )}
+                    {roomTypes.map((roomType, index) => (
+                      <div key={index} className="border rounded-md p-5 hover:border-sky-200 hover:bg-sky-50 transition-colors">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center">
+                              <Bed className="h-5 w-5 text-sky-600 mr-2" />
+                              <h3 className="font-semibold text-lg">{roomType.type} Room</h3>
                             </div>
-                            <div className="text-right">
-                              <p className="font-bold">${roomPrice}/night</p>
-                              <Button
-                                onClick={() => {
-                                  navigate(`/booking/${id}?roomType=${room.type}`);
-                                }}
-                                size="sm"
-                                className="mt-2"
-                              >
-                                Select
-                              </Button>
+                            <p className="text-muted-foreground mt-1">
+                              Capacity: {roomType.capacity} {roomType.capacity === 1 ? 'person' : 'people'} 
+                              • {roomType.availableCount} available
+                            </p>
+                            
+                            {roomType.amenities && roomType.amenities.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {roomType.amenities.map((amenity, i) => (
+                                  <Badge key={i} variant="outline" className="text-xs">
+                                    {amenity}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            
+                            <div className="mt-4">
+                              <p className="text-sm text-gray-600">
+                                {roomType.type === 'Standard' ? 
+                                  'Perfect for budget-conscious travelers who still want comfort.' :
+                                  roomType.type === 'Deluxe' ? 
+                                  'Enhanced comfort with additional amenities and more space.' :
+                                  roomType.type === 'Suite' ?
+                                  'Spacious accommodation with separate living area.' :
+                                  'Our most luxurious offering with premium features and service.'}
+                              </p>
                             </div>
                           </div>
-                        );
-                      })}
-
-                    {hotel.rooms.filter(room => room.available).length > 4 && (
-                      <Button
-                        variant="outline"
-                        className="w-full mt-2"
-                        onClick={handleBook}
-                      >
-                        View All Rooms
-                      </Button>
-                    )}
+                          
+                          <div className="text-right">
+                            <p className="text-2xl font-bold">${roomType.price}</p>
+                            <p className="text-sm text-muted-foreground">per night</p>
+                            
+                            <Button 
+                              onClick={() => handleBookRoomType(roomType.type)}
+                              size="sm"
+                              className="mt-3 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700"
+                            >
+                              Book Now
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                ) : (
+                  <p className="text-muted-foreground italic">No room information available</p>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -267,7 +297,7 @@ export default function HotelPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-2xl font-bold">${hotel.price}</p>
-                    <p className="text-sm text-muted-foreground">per night</p>
+                    <p className="text-sm text-muted-foreground">starting price per night</p>
                   </div>
                   <div className="flex items-center">
                     <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
@@ -281,9 +311,9 @@ export default function HotelPage() {
                 <Button 
                   size="lg" 
                   className="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700"
-                  onClick={handleBook}
+                  onClick={() => navigate(`/booking/${id}`)}
                 >
-                  Book Now
+                  View All Rooms
                 </Button>
                 
                 <ul className="mt-4 space-y-2 text-sm text-gray-600">
