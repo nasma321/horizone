@@ -307,14 +307,6 @@ export default function HotelPage() {
                     </span>
                   </div>
                 </div>
-
-                <Button 
-                  size="lg" 
-                  className="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700"
-                  onClick={() => navigate(`/booking/${id}`)}
-                >
-                  View All Rooms
-                </Button>
                 
                 <ul className="mt-4 space-y-2 text-sm text-gray-600">
                   <li className="flex items-center">
