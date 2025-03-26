@@ -4,14 +4,25 @@ const BACKEND_URL = "http://localhost:8001";
 
 export const api = createApi({
   reducerPath: "api",
+  // baseQuery: fetchBaseQuery({
+  //   baseUrl: `${BACKEND_URL}/api/`,
+  //   prepareHeaders: async (headers, { getState }) => {
+  //     const token = await window?.Clerk?.session?.getToken();
+  //     if (token) {
+  //       headers.set('Authorization', `Bearer ${token}`);
+  //     }
+  //   }
+  // }),
   baseQuery: fetchBaseQuery({
-    baseUrl: `${BACKEND_URL}/api/`,
+    baseUrl: "https://aidf-horizone-backend-nasma.onrender.com/api/",
     prepareHeaders: async (headers, { getState }) => {
-      const token = await window?.Clerk?.session?.getToken();
+      const token = await window.Clerk?.session?.getToken();
       if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
+        headers.set("Authorization", `Bearer ${token}`);
       }
-    }
+
+      return headers;
+    },
   }),
   tagTypes: ['Hotel', 'Booking'],
   endpoints: (builder) => ({
