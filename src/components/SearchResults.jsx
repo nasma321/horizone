@@ -8,7 +8,11 @@ import {
   Loader2,
   Wifi,
   Coffee,
-  Tv
+  Tv,
+  Car,
+  Check,
+  DumbbellIcon,
+  Utensils 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -162,12 +166,31 @@ export default function SearchResults() {
                 </p>
                 
                 <div className="flex gap-1 flex-wrap mb-2">
-                  {amenities.map(([name, icon]) => (
-                    <Badge key={name} variant="outline" className="text-xs flex items-center">
-                      {icon}
-                      {name}
+                  {result.hotel.amenities && result.hotel.amenities.length > 0 ? (
+                    result.hotel.amenities.slice(0, 3).map((amenity) => {
+                      let icon;
+                      const amenityLower = amenity.toLowerCase();
+                      if (amenityLower.includes('wifi')) icon = <Wifi className="w-3 h-3 mr-1" />;
+                      else if (amenityLower.includes('breakfast')) icon = <Coffee className="w-3 h-3 mr-1" />;
+                      else if (amenityLower.includes('tv')) icon = <Tv className="w-3 h-3 mr-1" />;
+                      else if (amenityLower.includes('parking')) icon = <Car className="w-3 h-3 mr-1" />;
+                      else if (amenityLower.includes('gym')) icon = <DumbbellIcon className="w-3 h-3 mr-1" />;
+                      else if (amenityLower.includes('restaurant')) icon = <Utensils className="w-3 h-3 mr-1" />;
+                      else icon = <Check className="w-3 h-3 mr-1" />;
+                      
+                      return (
+                        <Badge key={amenity} variant="outline" className="text-xs flex items-center">
+                          {icon}
+                          {amenity}
+                        </Badge>
+                      );
+                    })
+                  ) : (
+                    <Badge variant="outline" className="text-xs flex items-center">
+                      <Wifi className="w-3 h-3 mr-1" />
+                      WiFi
                     </Badge>
-                  ))}
+                  )}
                 </div>
                 
                 {result.confidence && (
