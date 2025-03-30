@@ -91,7 +91,18 @@ export const api = createApi({
         { type: 'Booking', id },
         'Booking'
       ]
-    })
+    }),
+    createCheckoutSession: builder.mutation({
+      query: (bookingId) => ({
+        url: `payments/create-checkout-session`,
+        method: "POST",
+        body: { bookingId },
+      }),
+    }),
+    
+    getCheckoutSessionStatus: builder.query({
+      query: (sessionId) => `payments/session-status?session_id=${sessionId}`,
+    }),
   }),
 });
 
@@ -105,5 +116,8 @@ export const {
   useCreateBookingMutation,
   useGetUserBookingsQuery,
   useGetBookingByIdQuery,
-  useCancelBookingMutation
+  useCancelBookingMutation,
+
+  useCreateCheckoutSessionMutation,
+  useGetCheckoutSessionStatusQuery,
 } = api;
