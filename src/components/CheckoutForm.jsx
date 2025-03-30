@@ -19,12 +19,14 @@ const CheckoutForm = ({ bookingId }) => {
   const fetchClientSecret = useCallback(async () => {
     try {
       const token = await getToken();
+      console.log("BACKEND_URL:", BACKEND_URL);
+      console.log("Full URL:", `${BACKEND_URL}/api/payments/create-checkout-session`);
       if (!token) {
         throw new Error("Authentication token not available");
       }
       
       // Create a Checkout Session
-      const res = await fetch(
+      const res = await fetch(      
         `${BACKEND_URL}/api/payments/create-checkout-session`,
         {
           method: "POST",
