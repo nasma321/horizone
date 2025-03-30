@@ -349,9 +349,14 @@ const BookingDetails = () => {
             </CardContent>
             {booking.status !== "cancelled" && booking.paymentStatus === "pending" && (
               <CardFooter>
-                <Button className="w-full bg-green-600 hover:bg-green-700">
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Pay Now
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  asChild
+                >
+                  <Link to={`/booking/payment?bookingId=${booking._id}`}>
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Pay Now
+                  </Link>
                 </Button>
               </CardFooter>
             )}

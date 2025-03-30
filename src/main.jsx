@@ -21,6 +21,9 @@ import { Provider } from "react-redux";
 import { ClerkProvider } from "@clerk/clerk-react";
 import BookingFormPage from "./pages/booking-form.page";
 
+import PaymentPage from "./pages/payment.page";
+import CompletePage from "./pages/complete.page";
+
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 if (!PUBLISHABLE_KEY) {
@@ -38,12 +41,13 @@ createRoot(document.getElementById("root")).render(
                 <Route path="/" element={<HomePage />} />
                 <Route path="/hotels" element={<HotelsPage />} />
                 <Route path="/hotels/:id" element={<HotelPage />} />
-                <Route path="/booking/:id" element={<BookingFormPage />} />
                 
                 <Route element={<ProtectedLayout />}>
                   <Route path="/account" element={<UserBookingsPage />} />
                   <Route path="/bookings/:id" element={<BookingDetailsPage />} />
-                  
+                  <Route path="/booking/payment" element={<PaymentPage />} />
+                  <Route path="/booking/complete" element={<CompletePage />} />                  
+                  <Route path="/booking/:id" element={<BookingFormPage />} />                  
                   <Route element={<AdminProtectedLayout />}>
                     <Route path="/hotels/create" element={<CreateHotelPage />} />
                   </Route>
